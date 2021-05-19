@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error as MSE
 import requests
 
 
@@ -79,17 +81,22 @@ X = df.drop('price', axis='columns')
 print('X', X.shape)
 print('y', y.shape)
 
-"""
+
 #DATA VISUALIZATION
-# Plot distribution of values for each column
-df.hist(figsize=(12,8),bins=20)
+# Plot distribution of values for each feature
+X.hist(figsize=(12,8),bins='auto')
+plt.figure()
+
+# Plot distribution of values for target
+y.hist(figsize=(3,2),bins='fd')
+#plt.clf()
 
 # Plot correlation matrix & heatmap
 plt.figure(figsize=(10,6))
 sns.heatmap(df.corr(),cmap=plt.cm.Greens,annot=True)
 plt.title('Correlation Heatmap', fontsize=10)
 plt.show()
-"""
+
 
 #X = scale(X)
 
@@ -126,3 +133,24 @@ print(lreg.score(X_test, y_test))
 
 cv_results = cross_val_score(lreg, X, y, cv=5)
 print(cv_results)
+
+
+# Instantiate a random forests regressor 'rf' 400 estimators
+rf = RandomForestRegressor(n_estimators=400,
+min_samples_leaf=0.12,
+random_state=SEED)
+# Fit 'rf' to the training set
+rf.fit(X_train, y_train)
+# Predict the test set labels 'y_pred'
+y_pred = rf.predict(X_test)
+# Evaluate the test set RMSE
+rmse_test = MSE(y_test, y_pred)**(1/2)
+# Print the test set RMSE
+print('Test set RMSE of rf: {:.2f}'.format(rmse_test))
+
+# Create a pd.Series of features importances
+importances_rf = pd.Series(rf.feature_importances_, index = X.columns)
+# Sort importances_rf
+sorted_importances_rf = importances_rf.sort_values()
+# Make a horizontal bar plot
+sorted_importances_rf.plot(kind='barh', color='lightgreen'); plt.show()

@@ -3,7 +3,14 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import scale
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
 import requests
+
+
 # Import the Excel file into a Pandas DataFrame
 df = pd.read_csv('diamonds.csv')
 
@@ -40,8 +47,15 @@ print(df.describe().round(2))
 missing_values_count = df.isnull().sum()
 print('\n Missing Values:\n', missing_values_count)
 
+# Drop rows where any of x/y/z dimensions are zero
+df.drop(df[df['x'] == 0 ].index , inplace=True)
+df.drop(df[df['y'] == 0 ].index , inplace=True)
+df.drop(df[df['z'] == 0 ].index , inplace=True)
+
+
 # Create list of names of categorical features
 cat_feat = ['cut', 'color', 'clarity']
+
 
 # Create Dummies
 #df = pd.get_dummies(df, columns=cat_feat)
@@ -56,8 +70,59 @@ def cat_to_ord(dataframe, feature_list):
 # Convert categorical features (Cut, Color, Clarity) to ordinal
 cat_to_ord(df, cat_feat)
 
+print(df.info())
 
-explore_df(df)
+# Create Feature Matrix (X) and Target Variable (y) from dataframe
+y = df['price']
+X = df.drop('price', axis='columns')
 
-sns_plot = sns.displot(df['price'])
+print('X', X.shape)
+print('y', y.shape)
+
+"""
+#DATA VISUALIZATION
+# Plot distribution of values for each column
+df.hist(figsize=(12,8),bins=20)
+
+# Plot correlation matrix & heatmap
+plt.figure(figsize=(10,6))
+sns.heatmap(df.corr(),cmap=plt.cm.Greens,annot=True)
+plt.title('Correlation Heatmap', fontsize=10)
 plt.show()
+"""
+
+#X = scale(X)
+
+# Create Training and Test sets using a 80/20 split. The data set is unbalanced (higher proportion of
+# "False" values for IsCancellation target variable), hence I'm using the Stratify option to ensure
+# that the random split maintains the correct proportion of True/False values in the train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
+
+# Instantiate regressor models
+lreg = LinearRegression()
+#knn = KNN()
+#dt = DecisionTreeClassifier(random_state=SEED)
+#gnb = GaussianNB()
+#lda = LinearDiscriminantAnalysis()
+
+# Define a list of tuples containing the classifiers and their respective names
+classifiers = [('Linear Regression', lreg)]
+
+"""
+# Iterating over the list of tuples, fit each model to the training set and predict the labels of the test set
+# Finally, evaluate and print the accuracy of each model on the test set
+for classifier_name, classifier in classifiers:
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    print('{:s} : {:.3f}'.format(classifier_name, classifier.score(X_test, y_test)))
+    #print('{:s} : {:.3f}'.format(classifier_name, accuracy_score(y_test, y_pred)))
+"""
+
+
+
+lreg.fit(X_train, y_train)
+y_pred = lreg.predict(X_test)
+print(lreg.score(X_test, y_test))
+
+cv_results = cross_val_score(lreg, X, y, cv=5)
+print(cv_results)

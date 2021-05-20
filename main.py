@@ -30,7 +30,7 @@ df = pd.read_csv('diamonds.csv')
 
 
 # Define random seed for reproducibility
-SEED = 42
+SEED = 2
 
 #Define function to explore the structure of a dataframe
 def explore_df(dataframe):
@@ -62,13 +62,14 @@ df.drop(df[df['y'] == 0 ].index , inplace=True)
 df.drop(df[df['z'] == 0 ].index , inplace=True)
 
 
-# Create list of names of categorical features
+# Create lists of categorical and numerical features
 cat_feat = ['cut', 'color', 'clarity']
-
+num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 
 # Create Dummies
-#df = pd.get_dummies(df, columns=cat_feat)
+df = pd.get_dummies(df, columns=cat_feat)
 
+"""
 # Define function to replace categorical features with ordinal features by applying Ordinal Encoder
 def cat_to_ord(dataframe, feature_list):
     ord_enc = OrdinalEncoder() #instantiate Ordinal Encoder
@@ -78,9 +79,14 @@ def cat_to_ord(dataframe, feature_list):
 
 # Convert categorical features (Cut, Color, Clarity) to ordinal
 cat_to_ord(df, cat_feat)
+"""
+
+scaler = StandardScaler()
+scaled_numerical = pd.DataFrame(scaler.fit_transform(df[num_feat]),columns=num_feat,index=df.index)
+df[num_feat] = scaled_numerical[num_feat]
+
 
 print(df.info())
-
 
 # Create Feature Matrix (X) and Target Variable (y) from dataframe
 y = df['price']
@@ -120,7 +126,7 @@ plt.show()
 # Create Training and Test sets using a 80/20 split. The data set is unbalanced (higher proportion of
 # "False" values for IsCancellation target variable), hence I'm using the Stratify option to ensure
 # that the random split maintains the correct proportion of True/False values in the train and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=SEED)
 
 # Instantiate regressor models
 lreg = LinearRegression()
@@ -146,7 +152,7 @@ for classifier_name, classifier in classifiers:
 
 lreg.fit(X_train, y_train)
 y_pred = lreg.predict(X_test)
-print('Score of Linear Regressor: {:.2f}'.format(lreg.score(X_test, y_test)))
+print('Score of Linear Regressor: {:.5f}'.format(lreg.score(X_test, y_test)))
 
 cv_results = cross_val_score(lreg, X, y, cv=5)
 print('CV Result of Linear Regressor: {:.2f}'.format(np.mean(cv_results)))

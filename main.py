@@ -154,6 +154,10 @@ lreg.fit(X_train, y_train)
 y_pred = lreg.predict(X_test)
 print('Score of Linear Regressor: {:.5f}'.format(lreg.score(X_test, y_test)))
 
+print(len(y_test), len(y_pred))
+for i in range(len(y_test)):
+    print(y_test.values[i], y_pred[i])
+
 cv_results = cross_val_score(lreg, X, y, cv=5)
 print('CV Result of Linear Regressor: {:.2f}'.format(np.mean(cv_results)))
 
@@ -168,6 +172,8 @@ y_pred = rf.predict(X_test)
 rmse_test = MSE(y_test, y_pred)**(1/2)
 # Print the test set RMSE
 print('Test set RMSE of rf: {:.2f}'.format(rmse_test))
+
+
 
 # Create a pd.Series of features importances
 importances_rf = pd.Series(rf.feature_importances_, index = X.columns)

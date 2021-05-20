@@ -1,9 +1,13 @@
 # Import packages
 import pandas as pd
+import numpy as np
+import sys
+from kaggle.api.kaggle_api_extended import KaggleApi
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import scale
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score
@@ -12,16 +16,18 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error as MSE
 import requests
 
+"""
+# Authenticating via Kaggle API
+api = KaggleApi()
+api.authenticate()
+
+# Use Kaggle API to download dataset
+api.dataset_download_files('shivam2503/diamonds', unzip=True)
+"""
 
 # Import the Excel file into a Pandas DataFrame
 df = pd.read_csv('diamonds.csv')
 
-"""
-# Web scraping: Retrieve data from the URL using get method
-url = "https://www.kaggle.com/shivam2503/diamonds/download"
-r = requests.get(url)
-df = pd.read_csv(r.content)
-"""
 
 # Define random seed for reproducibility
 SEED = 42
@@ -35,21 +41,22 @@ def explore_df(dataframe):
     print("\n Dataframe Head:")
     print(df.head())
 
-explore_df(df)
+#explore_df(df)
 
 # DATA CLEANING
 
 # Remove index column "Unnamed: 0"
 df.drop('Unnamed: 0', axis='columns', inplace=True)
 
-explore_df(df)
+#explore_df(df)
 print(df.describe().round(2))
 
+# TREATMENT OF MISSING DATA
 # Check for missing values in each column
 missing_values_count = df.isnull().sum()
 print('\n Missing Values:\n', missing_values_count)
 
-# Drop rows where any of x/y/z dimensions are zero
+# Drop rows where any of x/y/z dimensions are zero (effectively missing data)
 df.drop(df[df['x'] == 0 ].index , inplace=True)
 df.drop(df[df['y'] == 0 ].index , inplace=True)
 df.drop(df[df['z'] == 0 ].index , inplace=True)
@@ -74,6 +81,7 @@ cat_to_ord(df, cat_feat)
 
 print(df.info())
 
+
 # Create Feature Matrix (X) and Target Variable (y) from dataframe
 y = df['price']
 X = df.drop('price', axis='columns')
@@ -81,7 +89,7 @@ X = df.drop('price', axis='columns')
 print('X', X.shape)
 print('y', y.shape)
 
-
+"""
 #DATA VISUALIZATION
 # Plot distribution of values for each feature
 X.hist(figsize=(12,8),bins='auto')
@@ -98,7 +106,16 @@ plt.title('Correlation Heatmap', fontsize=10)
 plt.show()
 
 
-#X = scale(X)
+
+# Plot distribution of values for each feature
+#X.hist(figsize=(12,8),bins='auto')
+#plt.figure()
+
+# Plot distribution of values for target
+#y.hist(figsize=(3,2),bins='fd')
+"""
+
+
 
 # Create Training and Test sets using a 80/20 split. The data set is unbalanced (higher proportion of
 # "False" values for IsCancellation target variable), hence I'm using the Stratify option to ensure
@@ -129,16 +146,14 @@ for classifier_name, classifier in classifiers:
 
 lreg.fit(X_train, y_train)
 y_pred = lreg.predict(X_test)
-print(lreg.score(X_test, y_test))
+print('Score of Linear Regressor: {:.2f}'.format(lreg.score(X_test, y_test)))
 
 cv_results = cross_val_score(lreg, X, y, cv=5)
-print(cv_results)
+print('CV Result of Linear Regressor: {:.2f}'.format(np.mean(cv_results)))
 
 
 # Instantiate a random forests regressor 'rf' 400 estimators
-rf = RandomForestRegressor(n_estimators=400,
-min_samples_leaf=0.12,
-random_state=SEED)
+rf = RandomForestRegressor(n_estimators=400, min_samples_leaf=0.12, random_state=SEED)
 # Fit 'rf' to the training set
 rf.fit(X_train, y_train)
 # Predict the test set labels 'y_pred'
@@ -154,3 +169,6 @@ importances_rf = pd.Series(rf.feature_importances_, index = X.columns)
 sorted_importances_rf = importances_rf.sort_values()
 # Make a horizontal bar plot
 sorted_importances_rf.plot(kind='barh', color='lightgreen'); plt.show()
+
+
+sys.exit("Testing stop")

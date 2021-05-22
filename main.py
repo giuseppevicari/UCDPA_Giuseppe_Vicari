@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import sys
+import regex as re
 from kaggle.api.kaggle_api_extended import KaggleApi
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -74,6 +75,13 @@ num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 for feat in cat_feat:
     print(feat, '\n', df[feat].value_counts())
 
+# Use regular expressions to identify diamonds with lowest clarity grades (SI1, SI2, I1)
+my_regex = '\S?I\d'
+clar_counter = 0
+for clar in df['clarity']:
+    if re.match(my_regex, clar):
+        clar_counter +=1
+print('Poor clarity: ', clar_counter)
 # Create Dummies
 df = pd.get_dummies(df, columns=cat_feat)
 
@@ -131,7 +139,7 @@ adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=100)
 classifiers = [('Linear Regression', lreg), ('Decision Tree Regressor', dtree), ('Random Forest', rf),
                ('AdaBoost Regressor', adb_reg)]
 
-"""
+
 # Iterating over the list of tuples, fit each model to the training set and predict the labels of the test set
 # Finally, evaluate and print the RMSE and R2 scores of each model on the test set
 for classifier_name, classifier in classifiers:
@@ -139,17 +147,21 @@ for classifier_name, classifier in classifiers:
     y_pred = classifier.predict(X_test)
     print('R2 Score for {:s} : {:.3f}'.format(classifier_name, r2_score(y_test, y_pred)))
     print('RMSE Score for {:s} : {:.3f}'.format(classifier_name, MSE(y_test, y_pred)**(1/2)))
-"""
+
+sys.exit("Testing stop")
 
 # Checking predicted values for AdaBoost
 adb_reg.fit(X_train, y_train)
 y_pred = adb_reg.predict(X_test)
 #print(y_test, y_pred)
 
+plt.figure(figsize = (5,5))
 plt.scatter(y_test, y_pred)
+plt.xlabel('Test Values')
+plt.ylabel('Predicted Values')
 plt.show()
 
-sys.exit("Testing stop")
+
 
 
 # Create a pd.Series of features importances

@@ -182,5 +182,3 @@ sorted_importances_adb_reg = importances_adb_reg.sort_values()
 # Create bar plot of sorted importances
 sorted_importances_adb_reg.plot(kind='barh', color='blue'); plt.show()
 
-sys.exit("Testing stop")
-

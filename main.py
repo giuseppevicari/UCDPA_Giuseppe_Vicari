@@ -14,6 +14,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import AdaBoostRegressor
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
 
@@ -62,10 +63,16 @@ print(df.describe().round(2))
 missing_values_count = df.isnull().sum()
 print('\n Missing Values:\n', missing_values_count)
 
-# Drop rows where any of x/y/z dimensions are zero (effectively missing data)
-df.drop(df[df['x'] == 0 ].index , inplace=True)
-df.drop(df[df['y'] == 0 ].index , inplace=True)
-df.drop(df[df['z'] == 0 ].index , inplace=True)
+# Where any of x/y/z dimensions are zero (effectively missing data), replace with average
+x_mean = np.mean(df['x'])
+y_mean = np.mean(df['y'])
+z_mean = np.mean(df['z'])
+
+df['x'] = df['x'].replace(0, x_mean)
+df['y'] = df['y'].replace(0, y_mean)
+df['z'] = df['z'].replace(0, z_mean)
+
+print(df.describe().round(2))
 
 
 # Create lists of categorical and numerical features
@@ -75,13 +82,14 @@ num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 for feat in cat_feat:
     print(feat, '\n', df[feat].value_counts())
 
-# Use regular expressions to identify diamonds with lowest clarity grades (SI1, SI2, I1)
+# Use regular expressions to count diamonds with lowest clarity grades (SI1, SI2, I1)
 my_regex = '\S?I\d'
 clar_counter = 0
 for clar in df['clarity']:
     if re.match(my_regex, clar):
         clar_counter +=1
 print('Poor clarity: ', clar_counter)
+
 # Create Dummies
 df = pd.get_dummies(df, columns=cat_feat)
 
@@ -131,9 +139,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 
 # Instantiate regressor models
 lreg = LinearRegression()
-dtree = DecisionTreeRegressor(max_depth=8)
-rf = RandomForestRegressor(n_estimators=400, min_samples_leaf=0.12, random_state=SEED)
-adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=100)
+#dtree = DecisionTreeRegressor(max_depth=8)
+dtree = DecisionTreeRegressor(random_state=SEED)
+#rf = RandomForestRegressor(n_estimators=400, min_samples_leaf=0.12, random_state=SEED)
+rf = RandomForestRegressor(random_state=SEED)
+#adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=100)
+adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=200)
+
 
 # Define a list of tuples containing the classifiers and their respective names
 classifiers = [('Linear Regression', lreg), ('Decision Tree Regressor', dtree), ('Random Forest', rf),
@@ -148,7 +160,6 @@ for classifier_name, classifier in classifiers:
     print('R2 Score for {:s} : {:.3f}'.format(classifier_name, r2_score(y_test, y_pred)))
     print('RMSE Score for {:s} : {:.3f}'.format(classifier_name, MSE(y_test, y_pred)**(1/2)))
 
-sys.exit("Testing stop")
 
 # Checking predicted values for AdaBoost
 adb_reg.fit(X_train, y_train)
@@ -171,5 +182,5 @@ sorted_importances_adb_reg = importances_adb_reg.sort_values()
 # Make a horizontal bar plot
 sorted_importances_adb_reg.plot(kind='barh', color='lightgreen'); plt.show()
 
-
+sys.exit("Testing stop")
 

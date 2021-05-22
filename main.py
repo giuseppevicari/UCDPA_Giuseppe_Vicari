@@ -6,11 +6,12 @@ import regex as re
 from kaggle.api.kaggle_api_extended import KaggleApi
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import scale
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import Ridge
+
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import AdaBoostRegressor
@@ -73,7 +74,6 @@ df['y'] = df['y'].replace(0, y_mean)
 df['z'] = df['z'].replace(0, z_mean)
 
 print(df.describe().round(2))
-
 
 # Create lists of categorical and numerical features
 cat_feat = ['cut', 'color', 'clarity']
@@ -142,14 +142,18 @@ lreg = LinearRegression()
 #dtree = DecisionTreeRegressor(max_depth=8)
 dtree = DecisionTreeRegressor(random_state=SEED)
 #rf = RandomForestRegressor(n_estimators=400, min_samples_leaf=0.12, random_state=SEED)
-rf = RandomForestRegressor(random_state=SEED)
+#rf = RandomForestRegressor(random_state=SEED)
 #adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=100)
-adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=200)
+lasso_reg = Lasso()
+ridge_reg = Ridge()
 
 
 # Define a list of tuples containing the classifiers and their respective names
-classifiers = [('Linear Regression', lreg), ('Decision Tree Regressor', dtree), ('Random Forest', rf),
-               ('AdaBoost Regressor', adb_reg)]
+#classifiers = [('Linear Regression', lreg), ('Lasso', lasso_reg), ('Ridge', ridge_reg),
+ #              ('Decision Tree Regressor', dtree)]
+
+classifiers = [('Linear Regression', lreg), ('Ridge', ridge_reg),
+               ('Decision Tree Regressor', dtree)]
 
 
 # Iterating over the list of tuples, fit each model to the training set and predict the labels of the test set
@@ -157,13 +161,21 @@ classifiers = [('Linear Regression', lreg), ('Decision Tree Regressor', dtree), 
 for classifier_name, classifier in classifiers:
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
-    print('R2 Score for {:s} : {:.3f}'.format(classifier_name, r2_score(y_test, y_pred)))
-    print('RMSE Score for {:s} : {:.3f}'.format(classifier_name, MSE(y_test, y_pred)**(1/2)))
+    #print('Test Set R2 Score for {:s} : {:.3f}'.format(classifier_name, r2_score(y_test, y_pred)))
+    #print('Test Set RMSE Score for {:s} : {:.3f}'.format(classifier_name, MSE(y_test, y_pred)**(1/2)))
+    cv_score_RMSE = cross_val_score(classifier, X_train, y_train, scoring='neg_root_mean_squared_error', cv=10).mean()
+    cv_score_r2 = cross_val_score(classifier, X_train, y_train, scoring='r2', cv=10).mean()
+    print("%s CV R2 Score: %f " % (classifier_name, cv_score_r2))
+    print("%s CV RMSE Score: %f " % (classifier_name, cv_score_RMSE))
 
 
-# Checking predicted values for AdaBoost
+
+# Perform AdaBoost
+adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=200)
 adb_reg.fit(X_train, y_train)
 y_pred = adb_reg.predict(X_test)
+print('Test Set R2 Score for AdaBoost : {:.3f}'.format(r2_score(y_test, y_pred)))
+print('Test Set RMSE Score for AdaBoost : {:.3f}'.format(MSE(y_test, y_pred)**(1/2)))
 #print(y_test, y_pred)
 
 plt.figure(figsize = (5,5))

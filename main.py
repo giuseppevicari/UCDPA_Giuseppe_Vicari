@@ -10,10 +10,15 @@ from sklearn.preprocessing import scale
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error as MSE
+
 import requests
 
 """
@@ -30,7 +35,7 @@ df = pd.read_csv('diamonds.csv')
 
 
 # Define random seed for reproducibility
-SEED = 2
+SEED = 42
 
 #Define function to explore the structure of a dataframe
 def explore_df(dataframe):
@@ -66,27 +71,17 @@ df.drop(df[df['z'] == 0 ].index , inplace=True)
 cat_feat = ['cut', 'color', 'clarity']
 num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 
+for feat in cat_feat:
+    print(feat, '\n', df[feat].value_counts())
+
 # Create Dummies
 df = pd.get_dummies(df, columns=cat_feat)
 
-"""
-# Define function to replace categorical features with ordinal features by applying Ordinal Encoder
-def cat_to_ord(dataframe, feature_list):
-    ord_enc = OrdinalEncoder() #instantiate Ordinal Encoder
-    for feature in feature_list: #iterate over feature list
-        dataframe[feature+'_Ord'] = ord_enc.fit_transform(dataframe[[feature]]) #create new ordinal feature
-        dataframe.drop(feature, axis='columns', inplace=True) #drop categorical feature
-
-# Convert categorical features (Cut, Color, Clarity) to ordinal
-cat_to_ord(df, cat_feat)
-"""
-
+# Scale Data using sklearn Standard Scaler
 scaler = StandardScaler()
 scaled_numerical = pd.DataFrame(scaler.fit_transform(df[num_feat]),columns=num_feat,index=df.index)
 df[num_feat] = scaled_numerical[num_feat]
 
-
-print(df.info())
 
 # Create Feature Matrix (X) and Target Variable (y) from dataframe
 y = df['price']
@@ -123,64 +118,46 @@ plt.show()
 
 
 
-# Create Training and Test sets using a 80/20 split. The data set is unbalanced (higher proportion of
-# "False" values for IsCancellation target variable), hence I'm using the Stratify option to ensure
-# that the random split maintains the correct proportion of True/False values in the train and test sets
+# Create Training and Test sets using a 70/30 split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=SEED)
 
 # Instantiate regressor models
 lreg = LinearRegression()
-#knn = KNN()
-#dt = DecisionTreeClassifier(random_state=SEED)
-#gnb = GaussianNB()
-#lda = LinearDiscriminantAnalysis()
+dtree = DecisionTreeRegressor(max_depth=8)
+rf = RandomForestRegressor(n_estimators=400, min_samples_leaf=0.12, random_state=SEED)
+adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=100)
 
 # Define a list of tuples containing the classifiers and their respective names
-classifiers = [('Linear Regression', lreg)]
+classifiers = [('Linear Regression', lreg), ('Decision Tree Regressor', dtree), ('Random Forest', rf),
+               ('AdaBoost Regressor', adb_reg)]
 
 """
 # Iterating over the list of tuples, fit each model to the training set and predict the labels of the test set
-# Finally, evaluate and print the accuracy of each model on the test set
+# Finally, evaluate and print the RMSE and R2 scores of each model on the test set
 for classifier_name, classifier in classifiers:
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
-    print('{:s} : {:.3f}'.format(classifier_name, classifier.score(X_test, y_test)))
-    #print('{:s} : {:.3f}'.format(classifier_name, accuracy_score(y_test, y_pred)))
+    print('R2 Score for {:s} : {:.3f}'.format(classifier_name, r2_score(y_test, y_pred)))
+    print('RMSE Score for {:s} : {:.3f}'.format(classifier_name, MSE(y_test, y_pred)**(1/2)))
 """
 
+# Checking predicted values for AdaBoost
+adb_reg.fit(X_train, y_train)
+y_pred = adb_reg.predict(X_test)
+#print(y_test, y_pred)
 
+plt.scatter(y_test, y_pred)
+plt.show()
 
-lreg.fit(X_train, y_train)
-y_pred = lreg.predict(X_test)
-print('Score of Linear Regressor: {:.5f}'.format(lreg.score(X_test, y_test)))
-
-print(len(y_test), len(y_pred))
-for i in range(len(y_test)):
-    print(y_test.values[i], y_pred[i])
-
-cv_results = cross_val_score(lreg, X, y, cv=5)
-print('CV Result of Linear Regressor: {:.2f}'.format(np.mean(cv_results)))
-
-
-# Instantiate a random forests regressor 'rf' 400 estimators
-rf = RandomForestRegressor(n_estimators=400, min_samples_leaf=0.12, random_state=SEED)
-# Fit 'rf' to the training set
-rf.fit(X_train, y_train)
-# Predict the test set labels 'y_pred'
-y_pred = rf.predict(X_test)
-# Evaluate the test set RMSE
-rmse_test = MSE(y_test, y_pred)**(1/2)
-# Print the test set RMSE
-print('Test set RMSE of rf: {:.2f}'.format(rmse_test))
-
+sys.exit("Testing stop")
 
 
 # Create a pd.Series of features importances
-importances_rf = pd.Series(rf.feature_importances_, index = X.columns)
-# Sort importances_rf
-sorted_importances_rf = importances_rf.sort_values()
+importances_adb_reg = pd.Series(adb_reg.feature_importances_, index = X.columns)
+# Sort importances
+sorted_importances_adb_reg = importances_adb_reg.sort_values()
 # Make a horizontal bar plot
-sorted_importances_rf.plot(kind='barh', color='lightgreen'); plt.show()
+sorted_importances_adb_reg.plot(kind='barh', color='lightgreen'); plt.show()
 
 
-sys.exit("Testing stop")
+

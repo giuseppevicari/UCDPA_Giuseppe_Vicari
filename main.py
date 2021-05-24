@@ -64,7 +64,7 @@ explore_df(df)
 df.drop('Unnamed: 0', axis='columns', inplace=True)
 
 # Use regular expressions to count diamonds with lowest clarity grades (SI1, SI2, I1)
-my_regex = '\S?I\d'
+my_regex = 'S?I\d'
 clar_counter = 0
 for clar in df['clarity']:
     if re.match(my_regex, clar):
@@ -98,7 +98,7 @@ num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 
 
 def plotdf(dataframe):
-    """Plots feature distribution and correlation heatmap for given dataframe"""
+    """Plots feature distribution for given dataframe"""
     # Plot histograms to show distribution of numerical features
     dataframe[num_feat].hist(figsize=(12, 8), bins='auto')
 
@@ -106,14 +106,18 @@ def plotdf(dataframe):
     for feat in cat_feat:
         sns.catplot(x=feat, data=dataframe, kind='count', height=3, aspect=1.5)
 
+
+def plotheatmap(dataframe, annotation):
+    """Plots correlation heatmap for given dataframe"""
     # Plot correlation matrix & heatmap
     plt.figure(figsize=(10, 6))
-    sns.heatmap(dataframe.corr(), cmap='Greens', annot=True)
+    sns.heatmap(dataframe.corr(), cmap='RdYlGn', annot=annotation)
     plt.title('Correlation Heatmap', fontsize=10)
     plt.show()
 
 
 plotdf(df)
+plotheatmap(df, True)
 
 # DATA PRE-PROCESSING
 
@@ -129,6 +133,7 @@ print('Numerical Features after scaling:')
 print(df[num_feat].describe().round(2))
 print('\n')
 
+plotheatmap(df, False)
 
 # Create Feature Matrix (X) and Target Variable (y) from dataframe
 y = df['price']
@@ -202,6 +207,5 @@ importances_adb_reg = pd.Series(adb_reg.feature_importances_, index=X.columns)
 sorted_importances_adb_reg = importances_adb_reg.sort_values()
 sorted_importances_adb_reg.plot(kind='barh', color='blue')
 plt.show()
-
 
 # END

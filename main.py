@@ -5,7 +5,7 @@
 # Student: Giuseppe Vicari
 
 
-#### INITIALIZATION ####
+#### INITIALISATION ####
 
 # Import all libraries used in this project
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -39,7 +39,7 @@ api.dataset_download_files('shivam2503/diamonds', unzip=True)
 df = pd.read_csv('diamonds.csv')
 
 
-#### DATA CLEANING & EXPLORATORY DATA ANALYSIS ####
+#### EXPLORATORY DATA ANALYSIS & DATA CLEANING ####
 
 #Define function to explore the structure of a dataframe
 def explore_df(dataframe):
@@ -91,26 +91,29 @@ df['z'] = df['z'].replace(0, z_mean)
 
 #### DATA VISUALIZATION ####
 
-# Plot distribution of values for each feature
-df.hist(figsize=(12,8),bins='auto')
-
-# Plot correlation matrix & heatmap
-plt.figure(figsize=(10,6))
-sns.heatmap(df.corr(),cmap=plt.cm.Greens,annot=True)
-plt.title('Correlation Heatmap', fontsize=10)
-plt.show()
-
-
-#### DATA PRE-PROCESSING ####
-
 # Create lists of categorical and numerical features
 cat_feat = ['cut', 'color', 'clarity']
 num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 
-# For categorical features, count items in each category
-for feat in cat_feat:
-    print(feat, '\n', df[feat].value_counts())
-    print('\n')
+def plotdf(dataframe):
+    "Plots feature distribution and correlation heatmap for given dataframe"
+    # Plot histograms to show distribution of numerical features
+    dataframe[num_feat].hist(figsize=(12,8),bins='auto')
+
+    # Plot distribution of categorical features
+    for feat in cat_feat:
+        sns.catplot(x=feat, data=dataframe, kind='count', height=3, aspect=1.5)
+
+    # Plot correlation matrix & heatmap
+    plt.figure(figsize=(10,6))
+    sns.heatmap(dataframe.corr(),cmap='Greens',annot=True)
+    #sns.heatmap(dataframe.corr(), annot=True)
+    plt.title('Correlation Heatmap', fontsize=10)
+    plt.show()
+
+plotdf(df)
+
+#### DATA PRE-PROCESSING ####
 
 # One-Hot encoding: turn categorical data into a binary vector representation using Pandas get_dummies
 df = pd.get_dummies(df, columns=cat_feat)
@@ -120,11 +123,17 @@ scaler = StandardScaler()
 scaled_numerical = pd.DataFrame(scaler.fit_transform(df[num_feat]),columns=num_feat,index=df.index)
 df[num_feat] = scaled_numerical[num_feat]
 
+print('Numerical Features after scaling:')
+#explore_df(df[num_feat])
+print(df[num_feat].describe().round(2))
+print('\n')
+
+
 # Create Feature Matrix (X) and Target Variable (y) from dataframe
 y = df['price']
 X = df.drop('price', axis='columns')
 
-print('Checking structure of X and y dataframes')
+print('Shape of X and y dataframes')
 print('X', X.shape)
 print('y', y.shape)
 print('\n')
@@ -165,6 +174,8 @@ adb_reg.fit(X_train, y_train) # train model
 y_pred = adb_reg.predict(X_test) # prediction on test set
 print('Test Set R2 Score for AdaBoost : {:.2f}'.format(r2_score(y_test, y_pred)))
 print('Test Set RMSE Score for AdaBoost : {:.2f}'.format(MSE(y_test, y_pred)**(1/2)))
+print('\n')
+
 
 # Extract test values and AdaBoost residuals into two new datasets
 df_testvals = pd.DataFrame({'Test Values': y_test})
@@ -172,7 +183,9 @@ df_residuals = pd.DataFrame({'Residuals': y_pred - y_test}) # Residuals: differe
 
 # Concatenate dataframes along columns
 df_plot= pd.concat([df_testvals, df_residuals], axis=1)
+print('Shape of the AdaBoost Residuals dataframe:')
 explore_df(df_plot)
+print('\n')
 
 # Using the newly created dataframe, plot Residuals for AdaBoost to visually show accuracy of predictions
 # The closer to the y=0 line, the better

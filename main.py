@@ -1,11 +1,11 @@
-#### DESCRIPTION ####
+# DESCRIPTION
 
 # Data Analysis of Diamonds Dataset and application of Machine Learning models for price prediction
 # Final Project for Specialist Certificate in Data Analytics - University College Dublin
 # Student: Giuseppe Vicari
 
 
-#### INITIALISATION ####
+# INITIALISATION
 
 # Import all libraries used in this project
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -26,7 +26,7 @@ from sklearn.metrics import r2_score, mean_squared_error as MSE
 SEED = 42
 
 
-#### ACCESSING AND IMPORTING DATA ####
+# ACCESSING AND IMPORTING DATA
 
 # Authenticate via Kaggle API
 api = KaggleApi()
@@ -39,14 +39,14 @@ api.dataset_download_files('shivam2503/diamonds', unzip=True)
 df = pd.read_csv('diamonds.csv')
 
 
-#### EXPLORATORY DATA ANALYSIS & DATA CLEANING ####
+# EXPLORATORY DATA ANALYSIS & DATA CLEANING
 
-#Define function to explore the structure of a dataframe
+# Define function to explore the structure of a dataframe
 def explore_df(dataframe):
     "Prints information on the structure of the dataframe"
     print("\n Dataframe Shape:", dataframe.shape)
     print('\n')
-    print("\n Dataframe Info:" )
+    print("\n Dataframe Info:")
     print(dataframe.info())
     print('\n')
     print("\n Dataframe Head:")
@@ -55,6 +55,7 @@ def explore_df(dataframe):
     print("\n Dataframe Description:")
     print(dataframe.describe().round(2))
     print('\n')
+
 
 # Analyze structure of diamonds database
 explore_df(df)
@@ -67,12 +68,12 @@ my_regex = '\S?I\d'
 clar_counter = 0
 for clar in df['clarity']:
     if re.match(my_regex, clar):
-        clar_counter +=1
+        clar_counter += 1
 print('Count of diamonds with poor Clarity: ', clar_counter)
 print('\n')
 
 
-#### TREATMENT OF MISSING DATA ####
+# TREATMENT OF MISSING DATA
 
 # Count missing values in each column
 missing_values_count = df.isnull().sum()
@@ -89,42 +90,42 @@ df['y'] = df['y'].replace(0, y_mean)
 df['z'] = df['z'].replace(0, z_mean)
 
 
-#### DATA VISUALIZATION ####
+# DATA VISUALIZATION
 
 # Create lists of categorical and numerical features
 cat_feat = ['cut', 'color', 'clarity']
 num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 
+
 def plotdf(dataframe):
     "Plots feature distribution and correlation heatmap for given dataframe"
     # Plot histograms to show distribution of numerical features
-    dataframe[num_feat].hist(figsize=(12,8),bins='auto')
+    dataframe[num_feat].hist(figsize=(12, 8), bins='auto')
 
     # Plot distribution of categorical features
     for feat in cat_feat:
         sns.catplot(x=feat, data=dataframe, kind='count', height=3, aspect=1.5)
 
     # Plot correlation matrix & heatmap
-    plt.figure(figsize=(10,6))
-    sns.heatmap(dataframe.corr(),cmap='Greens',annot=True)
-    #sns.heatmap(dataframe.corr(), annot=True)
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(dataframe.corr(), cmap='Greens', annot=True)
     plt.title('Correlation Heatmap', fontsize=10)
     plt.show()
 
+
 plotdf(df)
 
-#### DATA PRE-PROCESSING ####
+# DATA PRE-PROCESSING
 
 # One-Hot encoding: turn categorical data into a binary vector representation using Pandas get_dummies
 df = pd.get_dummies(df, columns=cat_feat)
 
 # Standardize numerical features by removing the mean and scaling to unitary variance using sklearn Standard Scaler
 scaler = StandardScaler()
-scaled_numerical = pd.DataFrame(scaler.fit_transform(df[num_feat]),columns=num_feat,index=df.index)
+scaled_numerical = pd.DataFrame(scaler.fit_transform(df[num_feat]), columns=num_feat, index=df.index)
 df[num_feat] = scaled_numerical[num_feat]
 
 print('Numerical Features after scaling:')
-#explore_df(df[num_feat])
 print(df[num_feat].describe().round(2))
 print('\n')
 
@@ -139,7 +140,7 @@ print('y', y.shape)
 print('\n')
 
 
-#### SUPERVISED LEARNING ####
+# SUPERVISED LEARNING
 
 # Create Training and Test sets using a 70/30 split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=SEED)
@@ -158,8 +159,6 @@ classifiers = [('Linear Regression', lreg), ('Ridge Regressor', ridge), ('K Neig
 # Iterating over the list of tuples, perform a 10-fold cross-validation for each regressor model
 # For each model, evaluate and print the cross-validation scores (R2 and Root Mean Squared Error)
 for classifier_name, classifier in classifiers:
-    #classifier.fit(X_train, y_train)
-    #y_pred = classifier.predict(X_test)
     cv_score_r2 = cross_val_score(classifier, X_train, y_train, scoring='r2', cv=10).mean()
     cv_score_RMSE = -cross_val_score(classifier, X_train, y_train, scoring='neg_root_mean_squared_error', cv=10).mean()
 
@@ -169,9 +168,9 @@ for classifier_name, classifier in classifiers:
 
 # Perform Adaptive Boosting using Decision Tree regressor as base estimator
 # Evaluate R2 and RMSE scores for AdaBoost on the test set
-adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=200) # instantiate regressor
-adb_reg.fit(X_train, y_train) # train model
-y_pred = adb_reg.predict(X_test) # prediction on test set
+adb_reg = AdaBoostRegressor(base_estimator=dtree, n_estimators=200)  # instantiate regressor
+adb_reg.fit(X_train, y_train)  # train model
+y_pred = adb_reg.predict(X_test)  # prediction on test set
 print('Test Set R2 Score for AdaBoost : {:.2f}'.format(r2_score(y_test, y_pred)))
 print('Test Set RMSE Score for AdaBoost : {:.2f}'.format(MSE(y_test, y_pred)**(1/2)))
 print('\n')
@@ -179,29 +178,30 @@ print('\n')
 
 # Extract test values and AdaBoost residuals into two new datasets
 df_testvals = pd.DataFrame({'Test Values': y_test})
-df_residuals = pd.DataFrame({'Residuals': y_pred - y_test}) # Residuals: difference between predicted and actual values
+df_residuals = pd.DataFrame({'Residuals': y_pred - y_test})  # Residuals: difference between predicted and actual values
 
 # Concatenate dataframes along columns
-df_plot= pd.concat([df_testvals, df_residuals], axis=1)
+df_plot = pd.concat([df_testvals, df_residuals], axis=1)
 print('Shape of the AdaBoost Residuals dataframe:')
 explore_df(df_plot)
 print('\n')
 
 # Using the newly created dataframe, plot Residuals for AdaBoost to visually show accuracy of predictions
 # The closer to the y=0 line, the better
-plt.figure(figsize = (5,5))
-plt.axhline(y = 0, color = 'r', linestyle = 'dashed')
+plt.figure(figsize=(5, 5))
+plt.axhline(y=0, color='r', linestyle='dashed')
 plt.scatter(df_plot['Test Values'], df_plot['Residuals'], alpha=0.5, s=2)
 plt.xlabel('Test Values')
 plt.ylabel('Residuals')
 plt.show()
 
 # Extract series of feature importances for AdaBoost
-importances_adb_reg = pd.Series(adb_reg.feature_importances_, index = X.columns)
+importances_adb_reg = pd.Series(adb_reg.feature_importances_, index=X.columns)
 
 # Sort and plot on a bar chart
 sorted_importances_adb_reg = importances_adb_reg.sort_values()
-sorted_importances_adb_reg.plot(kind='barh', color='blue'); plt.show()
+sorted_importances_adb_reg.plot(kind='barh', color='blue')
+plt.show()
 
 
-#### END ####
+# END

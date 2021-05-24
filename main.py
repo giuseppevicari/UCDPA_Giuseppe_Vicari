@@ -43,7 +43,7 @@ df = pd.read_csv('diamonds.csv')
 
 # Define function to explore the structure of a dataframe
 def explore_df(dataframe):
-    "Prints information on the structure of the dataframe"
+    """Prints information on the structure of the dataframe"""
     print("\n Dataframe Shape:", dataframe.shape)
     print('\n')
     print("\n Dataframe Info:")
@@ -98,7 +98,7 @@ num_feat = ['carat', 'depth', 'x', 'y', 'z', 'table']
 
 
 def plotdf(dataframe):
-    "Plots feature distribution and correlation heatmap for given dataframe"
+    """Plots feature distribution and correlation heatmap for given dataframe"""
     # Plot histograms to show distribution of numerical features
     dataframe[num_feat].hist(figsize=(12, 8), bins='auto')
 
